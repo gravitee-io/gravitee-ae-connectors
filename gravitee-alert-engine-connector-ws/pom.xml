@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.ae</groupId>
         <artifactId>gravitee-alert-engine-connectors</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>gravitee-alert-engine-connectors-ws</artifactId>
