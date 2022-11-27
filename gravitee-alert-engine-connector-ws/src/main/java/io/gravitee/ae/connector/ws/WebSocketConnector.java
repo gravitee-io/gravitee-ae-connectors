@@ -31,6 +31,8 @@ import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.jackson.DatabindCodec;
+import io.vertx.core.net.ProxyOptions;
+import io.vertx.core.net.ProxyType;
 import java.io.IOException;
 import java.net.URI;
 import org.slf4j.Logger;
@@ -43,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class WebSocketConnector extends AbstractConnector<WebSocketConnector> {
 
+    private static final String HTTPS_SCHEME = "https";
     private final Logger logger = LoggerFactory.getLogger(WebSocketConnector.class);
 
     private static final long PING_HANDLER_DELAY = 5000;
@@ -192,6 +195,29 @@ public class WebSocketConnector extends AbstractConnector<WebSocketConnector> {
             WebSocketConnectOptions webSocketConnectOptions = new WebSocketConnectOptions();
             webSocketConnectOptions.setHeaders(getDefaultHeaders(engine));
             webSocketConnectOptions.setURI(target.getRawPath() + path);
+
+            var connectorConfig = engine.getConnectorConfiguration();
+
+            if (connectorConfig.isUseSystemProxy()) {
+                ProxyOptions proxyOptions = new ProxyOptions().setType(ProxyType.valueOf(connectorConfig.getProxyType()));
+                if (HTTPS_SCHEME.equals(target.getScheme())) {
+                    webSocketConnectOptions.setProxyOptions(
+                        proxyOptions
+                            .setHost(connectorConfig.getProxyHttpsHost())
+                            .setPort(connectorConfig.getProxyHttpsPort())
+                            .setUsername(connectorConfig.getProxyHttpsUsername())
+                            .setPassword(connectorConfig.getProxyHttpsPassword())
+                    );
+                } else {
+                    webSocketConnectOptions.setProxyOptions(
+                        proxyOptions
+                            .setHost(connectorConfig.getProxyHttpHost())
+                            .setPort(connectorConfig.getProxyHttpPort())
+                            .setUsername(connectorConfig.getProxyHttpUsername())
+                            .setPassword(connectorConfig.getProxyHttpPassword())
+                    );
+                }
+            }
 
             httpClient
                 .webSocket(webSocketConnectOptions)

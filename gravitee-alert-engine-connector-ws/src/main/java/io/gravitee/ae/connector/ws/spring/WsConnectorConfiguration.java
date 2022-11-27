@@ -27,6 +27,7 @@ import io.gravitee.alert.api.trigger.TriggerProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -37,8 +38,8 @@ import org.springframework.context.annotation.Import;
 public class WsConnectorConfiguration {
 
     @Bean
-    public ConnectorConfiguration websocketConnectorConfiguration() {
-        return new ConnectorConfiguration();
+    public ConnectorConfiguration websocketConnectorConfiguration(Environment environment) {
+        return new ConnectorConfiguration(environment);
     }
 
     @Bean
