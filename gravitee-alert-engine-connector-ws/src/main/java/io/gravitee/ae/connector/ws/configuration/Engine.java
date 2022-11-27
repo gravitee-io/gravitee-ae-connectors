@@ -21,6 +21,8 @@ import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PemTrustOptions;
 import io.vertx.core.net.PfxOptions;
+import io.vertx.core.net.ProxyOptions;
+import io.vertx.core.net.ProxyType;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -123,6 +125,26 @@ public class Engine {
             }
         }
 
+        if (connectorConfiguration.isUseSystemProxy()) {
+            ProxyOptions proxyOptions = new ProxyOptions().setType(ProxyType.valueOf(connectorConfiguration.getProxyType()));
+            if (HTTPS_SCHEME.equals(target.getScheme())) {
+                httpClientOptions.setProxyOptions(
+                    proxyOptions
+                        .setHost(connectorConfiguration.getProxyHttpsHost())
+                        .setPort(connectorConfiguration.getProxyHttpsPort())
+                        .setUsername(connectorConfiguration.getProxyHttpsUsername())
+                        .setPassword(connectorConfiguration.getProxyHttpsPassword())
+                );
+            } else {
+                httpClientOptions.setProxyOptions(
+                    proxyOptions
+                        .setHost(connectorConfiguration.getProxyHttpHost())
+                        .setPort(connectorConfiguration.getProxyHttpPort())
+                        .setUsername(connectorConfiguration.getProxyHttpUsername())
+                        .setPassword(connectorConfiguration.getProxyHttpPassword())
+                );
+            }
+        }
         return httpClientOptions;
     }
 
