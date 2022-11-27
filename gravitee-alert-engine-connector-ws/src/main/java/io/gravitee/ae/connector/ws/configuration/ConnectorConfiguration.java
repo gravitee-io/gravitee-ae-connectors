@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.AbstractEnvironment;
+import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.MapPropertySource;
 
@@ -33,8 +34,11 @@ public class ConnectorConfiguration {
     private static final String DEFAULT_ENDPOINT = "http://localhost:8072";
     private static final String DEFAULT_ENGINE_NAME = "default";
 
-    @Autowired
-    private Environment environment;
+    private final Environment environment;
+
+    public ConnectorConfiguration(Environment environment) {
+        this.environment = environment;
+    }
 
     /**
      * Alert Engine basic auth login.
@@ -176,6 +180,36 @@ public class ConnectorConfiguration {
     @Value("${alerts.alert-engine.ws.sendEventsOnHttp:true}")
     private boolean sendEventsOnHttp;
 
+    @Value("${httpClient.proxy.type:HTTP}")
+    private String proxyType;
+
+    @Value("${alerts.alert-engine.ws.useSystemProxy:false}")
+    private boolean useSystemProxy;
+
+    @Value("${httpClient.proxy.http.host:#{systemProperties['http.proxyHost'] ?: 'localhost'}}")
+    private String proxyHttpHost;
+
+    @Value("${httpClient.proxy.http.port:#{systemProperties['http.proxyPort'] ?: 3128}}")
+    private int proxyHttpPort;
+
+    @Value("${httpClient.proxy.http.username:#{null}}")
+    private String proxyHttpUsername;
+
+    @Value("${httpClient.proxy.http.password:#{null}}")
+    private String proxyHttpPassword;
+
+    @Value("${httpClient.proxy.https.host:#{systemProperties['https.proxyHost'] ?: 'localhost'}}")
+    private String proxyHttpsHost;
+
+    @Value("${httpClient.proxy.https.port:#{systemProperties['https.proxyPort'] ?: 3128}}")
+    private int proxyHttpsPort;
+
+    @Value("${httpClient.proxy.https.username:#{null}}")
+    private String proxyHttpsUsername;
+
+    @Value("${httpClient.proxy.https.password:#{null}}")
+    private String proxyHttpsPassword;
+
     private Map<String, Engine> engines;
 
     public Engine getDefaultEngine() {
@@ -210,17 +244,17 @@ public class ConnectorConfiguration {
         ((AbstractEnvironment) environment).getPropertySources()
             .stream()
             .collect(Collectors.toList())
+            .stream()
+            .filter(propertySource -> propertySource instanceof MapPropertySource)
             .forEach(propertySource -> {
-                if (propertySource instanceof MapPropertySource) {
-                    ((MapPropertySource) propertySource).getSource()
-                        .forEach((k, v) -> {
-                            if (k.startsWith(keyInitial)) {
-                                String replace = k.replace(keyInitial, "");
-                                String name = replace.substring(0, replace.indexOf("."));
-                                engineNames.add(name);
-                            }
-                        });
-                }
+                ((MapPropertySource) propertySource).getSource()
+                    .forEach((k, v) -> {
+                        if (k.startsWith(keyInitial)) {
+                            String replace = k.replace(keyInitial, "");
+                            String name = replace.substring(0, replace.indexOf("."));
+                            engineNames.add(name);
+                        }
+                    });
             });
 
         engineNames.forEach(name -> {
@@ -456,5 +490,95 @@ public class ConnectorConfiguration {
 
     public void setEngines(Map<String, Engine> engines) {
         this.engines = engines;
+    }
+
+    public String getProxyType() {
+        return proxyType;
+    }
+
+    public ConnectorConfiguration setProxyType(String proxyType) {
+        this.proxyType = proxyType;
+        return this;
+    }
+
+    public boolean isUseSystemProxy() {
+        return useSystemProxy;
+    }
+
+    public ConnectorConfiguration setUseSystemProxy(boolean useSystemProxy) {
+        this.useSystemProxy = useSystemProxy;
+        return this;
+    }
+
+    public String getProxyHttpHost() {
+        return proxyHttpHost;
+    }
+
+    public ConnectorConfiguration setProxyHttpHost(String proxyHttpHost) {
+        this.proxyHttpHost = proxyHttpHost;
+        return this;
+    }
+
+    public int getProxyHttpPort() {
+        return proxyHttpPort;
+    }
+
+    public ConnectorConfiguration setProxyHttpPort(int proxyHttpPort) {
+        this.proxyHttpPort = proxyHttpPort;
+        return this;
+    }
+
+    public String getProxyHttpUsername() {
+        return proxyHttpUsername;
+    }
+
+    public ConnectorConfiguration setProxyHttpUsername(String proxyHttpUsername) {
+        this.proxyHttpUsername = proxyHttpUsername;
+        return this;
+    }
+
+    public String getProxyHttpPassword() {
+        return proxyHttpPassword;
+    }
+
+    public ConnectorConfiguration setProxyHttpPassword(String proxyHttpPassword) {
+        this.proxyHttpPassword = proxyHttpPassword;
+        return this;
+    }
+
+    public String getProxyHttpsHost() {
+        return proxyHttpsHost;
+    }
+
+    public ConnectorConfiguration setProxyHttpsHost(String proxyHttpsHost) {
+        this.proxyHttpsHost = proxyHttpsHost;
+        return this;
+    }
+
+    public int getProxyHttpsPort() {
+        return proxyHttpsPort;
+    }
+
+    public ConnectorConfiguration setProxyHttpsPort(int proxyHttpsPort) {
+        this.proxyHttpsPort = proxyHttpsPort;
+        return this;
+    }
+
+    public String getProxyHttpsUsername() {
+        return proxyHttpsUsername;
+    }
+
+    public ConnectorConfiguration setProxyHttpsUsername(String proxyHttpsUsername) {
+        this.proxyHttpsUsername = proxyHttpsUsername;
+        return this;
+    }
+
+    public String getProxyHttpsPassword() {
+        return proxyHttpsPassword;
+    }
+
+    public ConnectorConfiguration setProxyHttpsPassword(String proxyHttpsPassword) {
+        this.proxyHttpsPassword = proxyHttpsPassword;
+        return this;
     }
 }
