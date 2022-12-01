@@ -170,10 +170,10 @@ public class ConnectorConfiguration {
 
     /**
      * Indicates if events should be sent over http or not.
-     * By default, to keep the same behavior of the previous version, events are sent over a websocket connection.
-     * The default behavior will switch to http in a next future version.
+     * If `false`, events will be sent over websocket, http otherwise
+     * Default is `true`
      */
-    @Value("${alerts.alert-engine.ws.sendEventsOnHttp:false}")
+    @Value("${alerts.alert-engine.ws.sendEventsOnHttp:true}")
     private boolean sendEventsOnHttp;
 
     private Map<String, Engine> engines;
