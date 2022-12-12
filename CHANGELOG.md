@@ -1,3 +1,21 @@
+# [2.0.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/1.0.0...2.0.0) (2022-12-12)
+
+
+### chore
+
+* use rxjava3 ([671ac02](https://github.com/gravitee-io/gravitee-ae-connectors/commit/671ac020dddb2eceb9e36c047de7351e3786ae5a))
+
+
+### Features
+
+* send events on http as default behaviour ([c41439c](https://github.com/gravitee-io/gravitee-ae-connectors/commit/c41439c77e30f32161d781cb0a7831bd946c47d9))
+* support proxy ([d61b2e3](https://github.com/gravitee-io/gravitee-ae-connectors/commit/d61b2e368cad37c574131ce44d37731c5f43abfb))
+
+
+### BREAKING CHANGES
+
+* rxjava3 fully replaces rxjava2
+
 # [2.0.0-alpha.2](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.0.0-alpha.1...2.0.0-alpha.2) (2022-12-06)
 
 
