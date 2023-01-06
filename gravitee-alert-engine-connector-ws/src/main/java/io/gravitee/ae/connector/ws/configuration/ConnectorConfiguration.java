@@ -15,10 +15,14 @@
  */
 package io.gravitee.ae.connector.ws.configuration;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
 import io.gravitee.ae.connector.ws.Endpoint;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
@@ -240,30 +244,30 @@ public class ConnectorConfiguration {
         Map<String, Engine> result = new HashMap<>();
 
         // try first with engines tag
-        final var engineNames = new HashSet<String>();
-        ((AbstractEnvironment) environment).getPropertySources()
-            .stream()
-            .collect(Collectors.toList())
-            .stream()
-            .filter(propertySource -> propertySource instanceof MapPropertySource)
-            .forEach(propertySource -> {
-                ((MapPropertySource) propertySource).getSource()
-                    .forEach((k, v) -> {
-                        if (k.startsWith(keyInitial)) {
-                            String replace = k.replace(keyInitial, "");
-                            String name = replace.substring(0, replace.indexOf("."));
-                            engineNames.add(name);
-                        }
-                    });
-            });
+        final var engineNames =
+            ((AbstractEnvironment) environment).getPropertySources()
+                .stream()
+                .filter(propertySource -> propertySource instanceof EnumerablePropertySource)
+                .filter(propertySource -> propertySource.getSource() instanceof Map)
+                .flatMap(propertySource ->
+                    ((EnumerablePropertySource<Map<?, ?>>) propertySource).getSource().keySet().stream().map(String::valueOf)
+                )
+                .filter(key -> key.startsWith(keyInitial))
+                .map(key -> {
+                    String replace = key.replace(keyInitial, "");
+                    return replace.substring(0, replace.indexOf("."));
+                })
+                .collect(toSet());
 
         engineNames.forEach(name -> {
             String key = String.format("%s%s", keyInitial, name);
-            List<Endpoint> endpointList = initializeEndpoints(key + ".endpoints").stream().map(Endpoint::new).collect(Collectors.toList());
-            String uname = environment.getProperty(key + ".security.username");
-            String pass = environment.getProperty(key + ".security.password");
+            List<Endpoint> endpointList = initializeEndpoints(key + ".endpoints").stream().map(Endpoint::new).collect(toList());
+            String username = environment.getProperty(key + ".security.username");
+            String password = environment.getProperty(key + ".security.password");
+            final EngineSecurity security = buildEngineSecurity(username, password);
+            EngineSsl sslConfig = buildSslConfig(key);
 
-            result.put(name, new Engine(this, endpointList, new Engine.Security(uname, pass)));
+            result.put(name, new Engine(this, endpointList, security, sslConfig));
         });
 
         if (!result.isEmpty()) {
@@ -273,14 +277,56 @@ public class ConnectorConfiguration {
         } else { // for backward compatibility
             Engine defaultEngine = new Engine(
                 this,
-                initializeEndpoints("alerts.alert-engine.ws.endpoints").stream().map(Endpoint::new).collect(Collectors.toList()),
-                new Engine.Security(this.getUsername(), this.getPassword())
+                initializeEndpoints("alerts.alert-engine.ws.endpoints").stream().map(Endpoint::new).collect(toList()),
+                buildEngineSecurity(this.getUsername(), this.getPassword()),
+                buildDefaultEngineSsl()
             );
 
             result.put(DEFAULT_ENGINE_NAME, defaultEngine);
         }
 
         return result;
+    }
+
+    private EngineSsl buildSslConfig(String key) {
+        var keystoreType = environment.getProperty(key + ".ssl.keystore.type");
+        var keystorePath = environment.getProperty(key + ".ssl.keystore.path");
+        var keystorePassword = environment.getProperty(key + ".ssl.keystore.password");
+        var trustall = environment.getProperty(key + ".ssl.trustall", boolean.class, false);
+        var verifyHostname = environment.getProperty(key + ".ssl.verifyHostname", boolean.class, false);
+        var truststoreType = environment.getProperty(key + ".ssl.truststore.type");
+        var truststorePath = environment.getProperty(key + ".ssl.truststore.path");
+        var truststorePassword = environment.getProperty(key + ".ssl.truststore.password");
+
+        return new EngineSsl()
+            .setKeystoreType(keystoreType)
+            .setKeystorePath(keystorePath)
+            .setKeystorePassword(keystorePassword)
+            .setKeystorePemCerts(initializeKeystorePemCerts(key + ".ssl.keystore.certs[%s]"))
+            .setKeystorePemKeys(initializeKeystorePemCerts(key + ".ssl.keystore.keys[%s]"))
+            .setTrustAll(trustall)
+            .setHostnameVerifier(verifyHostname)
+            .setTruststoreType(truststoreType)
+            .setTruststorePath(truststorePath)
+            .setTruststorePassword(truststorePassword);
+    }
+
+    private EngineSsl buildDefaultEngineSsl() {
+        return new EngineSsl()
+            .setKeystoreType(this.getKeystoreType())
+            .setKeystorePath(this.getKeystorePath())
+            .setKeystorePassword(this.getKeystorePassword())
+            .setKeystorePemCerts(this.getKeystorePemCerts())
+            .setKeystorePemKeys(this.getKeystorePemKeys())
+            .setTrustAll(this.isTrustAll())
+            .setHostnameVerifier(this.isHostnameVerifier())
+            .setTruststoreType(this.getTruststoreType())
+            .setTruststorePath(this.getTruststorePath())
+            .setTruststorePassword(this.getTruststorePassword());
+    }
+
+    private EngineSecurity buildEngineSecurity(String username, String password) {
+        return new EngineSecurity(username, password);
     }
 
     // Property methods
