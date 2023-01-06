@@ -17,12 +17,7 @@ package io.gravitee.ae.connector.ws.configuration;
 
 import io.gravitee.ae.connector.ws.Endpoint;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.net.JksOptions;
-import io.vertx.core.net.PemKeyCertOptions;
-import io.vertx.core.net.PemTrustOptions;
-import io.vertx.core.net.PfxOptions;
-import io.vertx.core.net.ProxyOptions;
-import io.vertx.core.net.ProxyType;
+import io.vertx.core.net.*;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -52,14 +47,16 @@ public class Engine {
 
     private ConnectorConfiguration connectorConfiguration;
     private List<Endpoint> endpoints;
-    private Security security;
+    private EngineSecurity security;
+    private EngineSsl sslConfig;
 
     public Engine() {}
 
-    public Engine(ConnectorConfiguration connectorConfiguration, List<Endpoint> endpoints, Security security) {
+    public Engine(ConnectorConfiguration connectorConfiguration, List<Endpoint> endpoints, EngineSecurity security, EngineSsl sslConfig) {
         this.connectorConfiguration = connectorConfiguration;
         this.endpoints = endpoints;
         this.security = security;
+        this.sslConfig = sslConfig;
     }
 
     public HttpClientOptions getHttpClientOptions(Endpoint endpoint) {
@@ -81,50 +78,17 @@ public class Engine {
         if (HTTPS_SCHEME.equalsIgnoreCase(target.getScheme())) {
             // Configure SSL
             httpClientOptions.setSsl(true);
-            httpClientOptions.setTrustAll(connectorConfiguration.isTrustAll());
-            httpClientOptions.setVerifyHost(connectorConfiguration.isHostnameVerifier());
-
-            if (connectorConfiguration.getKeystoreType() != null) {
-                if (connectorConfiguration.getKeystoreType().equalsIgnoreCase(KEYSTORE_FORMAT_JKS)) {
-                    httpClientOptions.setKeyStoreOptions(
-                        new JksOptions()
-                            .setPath(connectorConfiguration.getKeystorePath())
-                            .setPassword(connectorConfiguration.getKeystorePassword())
-                    );
-                } else if (connectorConfiguration.getKeystoreType().equalsIgnoreCase(KEYSTORE_FORMAT_PKCS12)) {
-                    httpClientOptions.setPfxKeyCertOptions(
-                        new PfxOptions()
-                            .setPath(connectorConfiguration.getKeystorePath())
-                            .setPassword(connectorConfiguration.getKeystorePassword())
-                    );
-                } else if (connectorConfiguration.getKeystoreType().equalsIgnoreCase(KEYSTORE_FORMAT_PEM)) {
-                    httpClientOptions.setPemKeyCertOptions(
-                        new PemKeyCertOptions()
-                            .setCertPaths(connectorConfiguration.getKeystorePemCerts())
-                            .setKeyPaths(connectorConfiguration.getKeystorePemKeys())
-                    );
-                }
-            }
-
-            if (connectorConfiguration.getTruststoreType() != null) {
-                if (connectorConfiguration.getTruststoreType().equalsIgnoreCase(KEYSTORE_FORMAT_JKS)) {
-                    httpClientOptions.setTrustStoreOptions(
-                        new JksOptions()
-                            .setPath(connectorConfiguration.getTruststorePath())
-                            .setPassword(connectorConfiguration.getTruststorePassword())
-                    );
-                } else if (connectorConfiguration.getTruststoreType().equalsIgnoreCase(KEYSTORE_FORMAT_PKCS12)) {
-                    httpClientOptions.setPfxTrustOptions(
-                        new PfxOptions()
-                            .setPath(connectorConfiguration.getTruststorePath())
-                            .setPassword(connectorConfiguration.getTruststorePassword())
-                    );
-                } else if (connectorConfiguration.getTruststoreType().equalsIgnoreCase(KEYSTORE_FORMAT_PEM)) {
-                    httpClientOptions.setPemTrustOptions(new PemTrustOptions().addCertPath(connectorConfiguration.getTruststorePath()));
-                }
-            }
+            httpClientOptions.setTrustAll(sslConfig.isTrustAll());
+            httpClientOptions.setVerifyHost(sslConfig.isHostnameVerifier());
+            setKeyStoreOptions(httpClientOptions);
+            setTruststoreOptions(httpClientOptions);
         }
 
+        setProxyOptions(target, httpClientOptions);
+        return httpClientOptions;
+    }
+
+    private void setProxyOptions(URI target, HttpClientOptions httpClientOptions) {
         if (connectorConfiguration.isUseSystemProxy()) {
             ProxyOptions proxyOptions = new ProxyOptions().setType(ProxyType.valueOf(connectorConfiguration.getProxyType()));
             if (HTTPS_SCHEME.equals(target.getScheme())) {
@@ -145,7 +109,54 @@ public class Engine {
                 );
             }
         }
-        return httpClientOptions;
+    }
+
+    private void setTruststoreOptions(HttpClientOptions httpClientOptions) {
+        if (sslConfig.getTruststoreType() != null) {
+            switch (sslConfig.getTruststoreType().toUpperCase()) {
+                case KEYSTORE_FORMAT_JKS:
+                    httpClientOptions.setTrustStoreOptions(
+                        new JksOptions().setPath(sslConfig.getTruststorePath()).setPassword(sslConfig.getTruststorePassword())
+                    );
+                    break;
+                case KEYSTORE_FORMAT_PKCS12:
+                    httpClientOptions.setPfxTrustOptions(
+                        new PfxOptions().setPath(sslConfig.getTruststorePath()).setPassword(sslConfig.getTruststorePassword())
+                    );
+                    break;
+                case KEYSTORE_FORMAT_PEM:
+                    httpClientOptions.setPemTrustOptions(new PemTrustOptions().addCertPath(sslConfig.getTruststorePath()));
+                    break;
+                default:
+                    //Do nothing
+                    break;
+            }
+        }
+    }
+
+    private void setKeyStoreOptions(HttpClientOptions httpClientOptions) {
+        if (sslConfig.getKeystoreType() != null) {
+            switch (sslConfig.getKeystoreType().toUpperCase()) {
+                case KEYSTORE_FORMAT_JKS:
+                    httpClientOptions.setKeyStoreOptions(
+                        new JksOptions().setPath(sslConfig.getKeystorePath()).setPassword(sslConfig.getKeystorePassword())
+                    );
+                    break;
+                case KEYSTORE_FORMAT_PKCS12:
+                    httpClientOptions.setPfxKeyCertOptions(
+                        new PfxOptions().setPath(sslConfig.getKeystorePath()).setPassword(sslConfig.getKeystorePassword())
+                    );
+                    break;
+                case KEYSTORE_FORMAT_PEM:
+                    httpClientOptions.setPemKeyCertOptions(
+                        new PemKeyCertOptions().setCertPaths(sslConfig.getKeystorePemCerts()).setKeyPaths(sslConfig.getKeystorePemKeys())
+                    );
+                    break;
+                default:
+                    //Do nothing
+                    break;
+            }
+        }
     }
 
     public Endpoint nextEndpoint() {
@@ -198,11 +209,11 @@ public class Engine {
         this.endpoints = endpoints;
     }
 
-    public Security getSecurity() {
+    public EngineSecurity getSecurity() {
         return security;
     }
 
-    public void setSecurity(Security value) {
+    public void setSecurity(EngineSecurity value) {
         this.security = value;
     }
 
@@ -217,45 +228,5 @@ public class Engine {
     @Override
     public int hashCode() {
         return Objects.hash(endpoints, security);
-    }
-
-    public static class Security {
-
-        private String username;
-        private String password;
-
-        public Security(String username, String password) {
-            this.username = username;
-            this.password = password;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String value) {
-            this.username = value;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String value) {
-            this.password = value;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Security security = (Security) o;
-            return Objects.equals(username, security.username) && Objects.equals(password, security.password);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(username, password);
-        }
     }
 }
