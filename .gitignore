@@ -23,3 +23,12 @@ admin/console/dist
 .settings/
 .classpath
 .project
+
+# .env files (docker compose, etc.)
+**/.env
+
+# also keystore and certificate files
+**/keystores/
+*.jks
+*.pem
+
