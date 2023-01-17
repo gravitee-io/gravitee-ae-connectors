@@ -1,0 +1,87 @@
+= Use case : one APIM and two AE
+
+This use case show how to configure two AE with secure connection configured with an APIM.
+
+== Setup
+
+=== Generate keystore
+
+We need a keystore to configure TLS connexion between component. Here, for convenience, we create only one keystore used by all component.
+
+To generate certificate in the keystores:
+
+[source,bash]
+----
+./generate-keystores.sh
+----
+
+=== Build the application
+
+The `alert-engine-connector-ws` plugin must be build to be able to use it in APIM gateways and Management APIs. It is used by a volume mount in docker-compose file.
+
+To build the plugin locally, from the root folder of the repo:
+
+[source,bash]
+----
+mvn clean verify
+----
+
+=== Environment variable
+
+You should create an environment file `.env` at least to define the path to your gravitee licence (needed to use Alert-Engine).
+
+You can create one from the template and *update it*:
+
+[source,bash]
+----
+cp .env.template .env
+----
+
+
+== Run
+
+Everything is defined between compose file and configuration file. To run it just do:
+
+[source,bash]
+----
+docker compose up -d
+----
+
+Afterward, you can login to the management UI via http://localhost:8080 with default credentials (admin:admin) and run a test case:
+
+. In the organization setting, enable Alert-Engine
+. create an API `echo` witch target https://api.gravitee.io/echo
+. add an alert: In the `echo` API settings, on `Alert` sub-menu:
++
+----
+Alert when a metric of the request validates a condition
+Metrics     : Response time
+Type        : Threshold
+Operator    : less than
+Threshold   : 20000
+----
+
+. get the IP addresse of gateways and call the `echo` api:
++
+[source, bash]
+----
+while read -r container_id
+do
+  container_ip="$(docker inspect "${container_id}" | jq -r '.[0].NetworkSettings.Networks|to_entries[0].value.IPAddress')"
+  echo -e "\n\n${container_id} ip: ${container_ip}"
+  curl -k "http://${container_ip}:8082/echo"
+done < <(docker compose ps --format json gateway-1 gateway-2 |jq -r '.[].Name')
+----
+. Finally, go to the `History` pane in the `Alert` menu of `echo` api and see the notification triggered by AE.
+
+
+== Annexe - useful commands
+
+[source, bash]
+----
+openssl s_client -connect alert-engine-1:8072 -showcerts </dev/null | openssl x509 -noout -subject
+
+keytool -exportcert -alias alert-engine-1 -file ae1.pem -rfc -storepass unsecure -keystore /secure/keystore.jks
+
+curl --cacert ae1.pem -Iv --user 'admin:adminadmin' 'https://alert-engine-1:8072/http/trigger'
+----
