@@ -1,0 +1,88 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+############################################################################################################
+################################## Gravitee.io Alert Engine - Configuration ################################
+############################################################################################################
+
+############################################################################################################
+# This file is the general configuration of Gravitee.io Alert Engine:
+# - Properties (and respective default values) in comment are provided for information.
+# - You can reference other property by using ${property.name} syntax
+# - gravitee.home property is automatically set-up by launcher and refers to the installation path. Do not override it !
+#
+############################################################################################################
+
+# Ingesters
+ingesters:
+  ws:
+    instances: 0
+    port: 8072
+    host: alert-engine-2
+    secured: true
+    alpn: false
+    ssl:
+      clientAuth: false
+      keystore:
+        type: jks # Supports jks, pem, pkcs12
+        path: /secure/keystore.jks
+        password: unsecure
+      truststore:
+        type: jks # Supports jks, pem, pkcs12
+        path: /secure/keystore.jks
+        password: unsecure
+    authentication: # authentication type to be used for HTTP authentication
+      type: basic # none to disable authentication / basic for basic authentication
+      users:
+        admin: adminadmin
+
+# Alert service configurations. Provided values are default values.
+# All services are enabled by default. To stop one of them, you have to add the property 'enabled: false'.
+services:
+  core:
+    http:
+      enabled: true
+      port: 18072
+      host: localhost
+      authentication:
+        # authentication type to be used for the core services
+        # - none : to disable authentication
+        # - basic : to use basic authentication
+        # default is "basic"
+        type: basic
+        users:
+          admin: adminadmin
+  metrics:
+    enabled: false
+    prometheus:
+      enabled: true
+
+cluster:
+  sync:
+    time:
+      value: 30
+      unit: SECONDS
+
+  hazelcast:
+    # Hazelcast system properties (see https://docs.hazelcast.org/docs/latest/manual/html-single/#system-properties)
+    # Use the same properties without 'hazelcast.' prefix.
+    #systemProperties:
+      # Timeout to wait for a response when a remote call is sent, in milliseconds.
+      #operation.call.timeout.millis: 60000
+      # Socket connection timeout in seconds. Socket.connect() is blocked until either connection is established or connection is refused or this timeout passes. Default is 0, means infinite.
+      #socket.connect.timeout.seconds: 0
+    config:
+      path: ${gravitee.home}/config/hazelcast.xml
