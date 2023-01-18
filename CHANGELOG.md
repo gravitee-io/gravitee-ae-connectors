@@ -1,3 +1,10 @@
+# [2.1.0-alpha.1](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.0.0...2.1.0-alpha.1) (2023-01-18)
+
+
+### Features
+
+* allow different engines to connect with independant ssl configuration ([4110f6b](https://github.com/gravitee-io/gravitee-ae-connectors/commit/4110f6bc6fcb2c82f6f52d050158f253a70b4d78))
+
 # [2.0.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/1.0.0...2.0.0) (2022-12-12)
 
 
