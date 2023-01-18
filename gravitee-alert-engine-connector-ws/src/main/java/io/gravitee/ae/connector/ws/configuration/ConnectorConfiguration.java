@@ -19,10 +19,13 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 import io.gravitee.ae.connector.ws.Endpoint;
+import io.gravitee.ae.connector.ws.WebSocketConnector;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
@@ -37,6 +40,8 @@ public class ConnectorConfiguration {
 
     private static final String DEFAULT_ENDPOINT = "http://localhost:8072";
     private static final String DEFAULT_ENGINE_NAME = "default";
+
+    private final Logger logger = LoggerFactory.getLogger(ConnectorConfiguration.class);
 
     private final Environment environment;
 
@@ -241,10 +246,8 @@ public class ConnectorConfiguration {
 
     private Map<String, Engine> initializeEngines() {
         String keyInitial = "alerts.alert-engine.engines.";
-        Map<String, Engine> result = new HashMap<>();
 
-        // try first with engines tag
-        final var engineNames =
+        Map<String, Engine> result =
             ((AbstractEnvironment) environment).getPropertySources()
                 .stream()
                 .filter(propertySource -> propertySource instanceof EnumerablePropertySource)
@@ -253,22 +256,19 @@ public class ConnectorConfiguration {
                     ((EnumerablePropertySource<Map<?, ?>>) propertySource).getSource().keySet().stream().map(String::valueOf)
                 )
                 .filter(key -> key.startsWith(keyInitial))
-                .map(key -> {
-                    String replace = key.replace(keyInitial, "");
-                    return replace.substring(0, replace.indexOf("."));
+                .map(key -> key.replace(keyInitial, "").split("\\.", 2)[0])
+                .distinct()
+                .map(engineName -> {
+                    logger.info("initialize engine {}", engineName);
+                    String key = String.format("%s%s", keyInitial, engineName);
+                    List<Endpoint> endpointList = initializeEndpoints(key + ".endpoints").stream().map(Endpoint::new).collect(toList());
+                    String username = environment.getProperty(key + ".security.username");
+                    String password = environment.getProperty(key + ".security.password");
+                    final EngineSecurity security = buildEngineSecurity(username, password);
+                    EngineSsl sslConfig = buildSslConfig(key);
+                    return Map.entry(engineName, new Engine(this, endpointList, security, sslConfig));
                 })
-                .collect(toSet());
-
-        engineNames.forEach(name -> {
-            String key = String.format("%s%s", keyInitial, name);
-            List<Endpoint> endpointList = initializeEndpoints(key + ".endpoints").stream().map(Endpoint::new).collect(toList());
-            String username = environment.getProperty(key + ".security.username");
-            String password = environment.getProperty(key + ".security.password");
-            final EngineSecurity security = buildEngineSecurity(username, password);
-            EngineSsl sslConfig = buildSslConfig(key);
-
-            result.put(name, new Engine(this, endpointList, security, sslConfig));
-        });
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         if (!result.isEmpty()) {
             if (result.get(DEFAULT_ENGINE_NAME) == null) {
