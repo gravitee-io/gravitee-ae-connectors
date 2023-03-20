@@ -1,3 +1,15 @@
+# [2.1.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.0.0...2.1.0) (2023-03-20)
+
+
+### Bug Fixes
+
+* **deps:** bump orb to 2.5 ([55c4828](https://github.com/gravitee-io/gravitee-ae-connectors/commit/55c48288553aa6a3b90becaf3659e729059de40a))
+
+
+### Features
+
+* allow different engines to connect with independant ssl configuration ([48e838b](https://github.com/gravitee-io/gravitee-ae-connectors/commit/48e838bf49865fd410d6b4becc73eca52db5f05a))
+
 # [2.1.0-alpha.1](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.0.0...2.1.0-alpha.1) (2023-01-18)
 
 
