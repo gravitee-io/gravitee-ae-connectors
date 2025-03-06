@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+    Copyright © 2015 The Gravitee team (http://gravitee.io)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-            http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>21.0.0</version>
+        <version>22.3.0</version>
     </parent>
 
     <groupId>io.gravitee.ae</groupId>
@@ -40,12 +40,17 @@
     </modules>
 
     <properties>
-        <gravitee-bom.version>4.0.0</gravitee-bom.version>
-        <gravitee-node.version>3.0.1</gravitee-node.version>
-        <gravitee-plugin.version>1.25.0</gravitee-plugin.version>
-        <gravitee-alert-api.version>2.0.0</gravitee-alert-api.version>
-        <mockito.version>4.5.1</mockito.version>
-        <assertj.version>3.22.0</assertj.version>
+        <gravitee-bom.version>8.2.17</gravitee-bom.version>
+        <gravitee-node.version>7.0.7</gravitee-node.version>
+        <gravitee-plugin.version>4.7.0</gravitee-plugin.version>
+        <gravitee-alert-api.version>2.1.0</gravitee-alert-api.version>
+        <prettier-maven-plugin.prettierJavaVersion>2.1.0</prettier-maven-plugin.prettierJavaVersion>
+
+        <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
+        <awaitability.version>4.3.0</awaitability.version>
+
+        <skip.validation>false</skip.validation>
+        <jdk.version>17</jdk.version>
     </properties>
 
     <dependencyManagement>
@@ -60,11 +65,6 @@
             </dependency>
 
             <!-- Gravitee.io -->
-            <dependency>
-                <groupId>io.gravitee.cockpit</groupId>
-                <artifactId>gravitee-cockpit-api</artifactId>
-                <version>${gravitee-cockpit-api.version}</version>
-            </dependency>
             <dependency>
                 <groupId>io.gravitee.alert</groupId>
                 <artifactId>gravitee-alert-api</artifactId>
@@ -83,26 +83,6 @@
                 <version>${gravitee-node.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <!-- Test dependencies -->
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-junit-jupiter</artifactId>
-                <version>${mockito.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <version>${mockito.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>${assertj.version}</version>
-                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -155,34 +135,33 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.3.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.11.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M6</version>
+                <version>3.5.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>com.hubspot.maven.plugins</groupId>
                 <artifactId>prettier-maven-plugin</artifactId>
-                <version>0.17</version>
                 <configuration>
-                    <nodeVersion>12.13.0</nodeVersion>
-                    <prettierJavaVersion>1.6.1</prettierJavaVersion>
+                    <prettierJavaVersion>${prettier-maven-plugin.prettierJavaVersion}</prettierJavaVersion>
+                    <skip>${skip.validation}</skip>
                 </configuration>
                 <executions>
                     <execution>

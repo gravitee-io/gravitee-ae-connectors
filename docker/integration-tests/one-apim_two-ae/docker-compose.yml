@@ -1,11 +1,11 @@
 #
-# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+# Copyright © 2015 The Gravitee team (http://gravitee.io)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#         http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,213 +14,212 @@
 # limitations under the License.
 #
 
-version: '3.9'
+version: "3.9"
 
 networks:
-  control-plan:
-  ae-1:
-  ae-2:
+    control-plan:
+    ae-1:
+    ae-2:
 
 volumes:
-  data-elasticsearch:
-  data-mongo:
+    data-elasticsearch:
+    data-mongo:
 
 x-pluginAEconnector: &pluginAEconnector
-  type: bind
-  source: ./../../../gravitee-alert-engine-connector-ws/target/gravitee-ae-connectors-ws-2.0.0.zip
-  target: /opt/graviteeio-gateway/plugins/gravitee-alert-engine-connectors-ws-2.0.0.zip
-  read_only: true
+    type: bind
+    source: ./../../../gravitee-alert-engine-connector-ws/target/gravitee-ae-connectors-ws-2.0.0.zip
+    target: /opt/graviteeio-gateway/plugins/gravitee-alert-engine-connectors-ws-2.0.0.zip
+    read_only: true
 
 services:
+    mongodb:
+        image: mongo:${MONGODB_VERSION:-5}
+        healthcheck:
+            test: ["CMD", "mongo", "--quiet", "localhost/test", "--eval", "quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)"]
+            interval: 20s
+            timeout: 10s
+            retries: 3
+        volumes:
+            - data-mongo:/data/db
+        networks:
+            - control-plan
 
-  mongodb:
-    image: mongo:${MONGODB_VERSION:-5}
-    healthcheck:
-      test: [ "CMD", "mongo", "--quiet", "localhost/test", "--eval", "quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)" ]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-    volumes:
-      - data-mongo:/data/db
-    networks:
-      - control-plan
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-7.7.0}
+        healthcheck:
+            test: ["CMD", "curl", "-fsSL", "http://localhost:9200/_cat/health?h=status"]
+            interval: 20s
+            timeout: 10s
+            retries: 3
+        volumes:
+            - data-elasticsearch:/usr/share/elasticsearch/data
+        environment:
+            - http.host=0.0.0.0
+            - transport.host=0.0.0.0
+            - xpack.security.enabled=false
+            - xpack.monitoring.enabled=false
+            - cluster.name=elasticsearch
+            - bootstrap.memory_lock=true
+            - discovery.type=single-node
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+            nofile: 65536
+        networks:
+            - control-plan
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-7.7.0}
-    healthcheck:
-      test: [ "CMD", "curl", "-fsSL", "http://localhost:9200/_cat/health?h=status" ]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-    volumes:
-      - data-elasticsearch:/usr/share/elasticsearch/data
-    environment:
-      - http.host=0.0.0.0
-      - transport.host=0.0.0.0
-      - xpack.security.enabled=false
-      - xpack.monitoring.enabled=false
-      - cluster.name=elasticsearch
-      - bootstrap.memory_lock=true
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile: 65536
-    networks:
-      - control-plan
+    gateway-1:
+        image: ${APIM_REGISTRY:-graviteeio}/apim-gateway:${APIM_VERSION:-latest}
+        healthcheck:
+            test: ["CMD", "curl", "--user", "admin:adminadmin", "--fail", "http://localhost:18082/_node/health"]
+            interval: 20s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        depends_on:
+            - mongodb
+            - elasticsearch
+            - alert-engine-1
+            - alert-engine-2
+        volumes:
+            - ${LICENCE_KEY_PATH}:/opt/graviteeio-gateway/license/license.key:ro
+            - ./keystores/keystore-gateway-1.jks:/secure/keystore.jks:ro
+            - ./gateway_gravitee_1.yml:/opt/graviteeio-gateway/config/gravitee.yml:ro
+            - *pluginAEconnector
+        environment:
+            - gravitee_management_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+            - gravitee_ratelimit_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+            - gravitee_reporters_elasticsearch_endpoints_0=http://elasticsearch:9200
+            - gravitee_plugins_path_0=$${gravitee.home}/plugins
+        networks:
+            - control-plan
+            - ae-1
 
-  gateway-1:
-    image: ${APIM_REGISTRY:-graviteeio}/apim-gateway:${APIM_VERSION:-latest}
-    healthcheck:
-      test: [ "CMD", "curl", "--user", "admin:adminadmin", "--fail", "http://localhost:18082/_node/health" ]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    depends_on:
-      - mongodb
-      - elasticsearch
-      - alert-engine-1
-      - alert-engine-2
-    volumes:
-      - ${LICENCE_KEY_PATH}:/opt/graviteeio-gateway/license/license.key:ro
-      - ./keystores/keystore-gateway-1.jks:/secure/keystore.jks:ro
-      - ./gateway_gravitee_1.yml:/opt/graviteeio-gateway/config/gravitee.yml:ro
-      - *pluginAEconnector
-    environment:
-      - gravitee_management_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
-      - gravitee_ratelimit_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
-      - gravitee_reporters_elasticsearch_endpoints_0=http://elasticsearch:9200
-      - gravitee_plugins_path_0=$${gravitee.home}/plugins
-    networks:
-      - control-plan
-      - ae-1
+    gateway-2:
+        image: ${APIM_REGISTRY:-graviteeio}/apim-gateway:${APIM_VERSION:-latest}
+        healthcheck:
+            test: ["CMD", "curl", "--user", "admin:adminadmin", "--fail", "http://localhost:18082/_node/health"]
+            interval: 20s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        depends_on:
+            - mongodb
+            - elasticsearch
+            - alert-engine-1
+            - alert-engine-2
+        volumes:
+            - ${LICENCE_KEY_PATH}:/opt/graviteeio-gateway/license/license.key:ro
+            - ./keystores/keystore-gateway-2.jks:/secure/keystore.jks:ro
+            - ./gateway_gravitee_2.yml:/opt/graviteeio-gateway/config/gravitee.yml:ro
+            - *pluginAEconnector
+        environment:
+            - gravitee_management_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+            - gravitee_ratelimit_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+            - gravitee_reporters_elasticsearch_endpoints_0=http://elasticsearch:9200
+            - gravitee_plugins_path_0=$${gravitee.home}/plugins
+        networks:
+            - control-plan
+            - ae-2
 
-  gateway-2:
-    image: ${APIM_REGISTRY:-graviteeio}/apim-gateway:${APIM_VERSION:-latest}
-    healthcheck:
-      test: [ "CMD", "curl", "--user", "admin:adminadmin", "--fail", "http://localhost:18082/_node/health" ]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    depends_on:
-      - mongodb
-      - elasticsearch
-      - alert-engine-1
-      - alert-engine-2
-    volumes:
-      - ${LICENCE_KEY_PATH}:/opt/graviteeio-gateway/license/license.key:ro
-      - ./keystores/keystore-gateway-2.jks:/secure/keystore.jks:ro
-      - ./gateway_gravitee_2.yml:/opt/graviteeio-gateway/config/gravitee.yml:ro
-      - *pluginAEconnector
-    environment:
-      - gravitee_management_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
-      - gravitee_ratelimit_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
-      - gravitee_reporters_elasticsearch_endpoints_0=http://elasticsearch:9200
-      - gravitee_plugins_path_0=$${gravitee.home}/plugins
-    networks:
-      - control-plan
-      - ae-2
+    management-api:
+        image: ${APIM_REGISTRY:-graviteeio}/apim-management-api:${APIM_VERSION:-latest}
+        healthcheck:
+            test: ["CMD", "curl", "--user", "admin:adminadmin", "--fail", "http://localhost:18083/_node/health"]
+            interval: 20s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        ports:
+            - "8081:8083"
+        links:
+            - mongodb
+            - elasticsearch
+            - alert-engine-1
+            - alert-engine-2
+            - gateway-1
+            - gateway-2
+        depends_on:
+            - mongodb
+            - elasticsearch
+        volumes:
+            - ${LICENCE_KEY_PATH}:/opt/graviteeio-management-api/license/license.key:ro
+            - ./keystores/keystore-management-api.jks:/secure/keystore.jks:ro
+            - ./management-api_gravitee.yml:/opt/graviteeio-management-api/config/gravitee.yml:ro
+            - <<: *pluginAEconnector
+              target: /opt/graviteeio-management-api/plugins/gravitee-alert-engine-connectors-ws-2.0.0.zip
+        environment:
+            - gravitee_management_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+            - gravitee_analytics_elasticsearch_endpoints_0=http://elasticsearch:9200
+            - gravitee_plugins_path_0=$${gravitee.home}/plugins
+        networks:
+            - control-plan
+            - ae-1
+            - ae-2
 
-  management-api:
-    image: ${APIM_REGISTRY:-graviteeio}/apim-management-api:${APIM_VERSION:-latest}
-    healthcheck:
-      test: [ "CMD", "curl", "--user", "admin:adminadmin", "--fail", "http://localhost:18083/_node/health" ]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    ports:
-      - "8081:8083"
-    links:
-      - mongodb
-      - elasticsearch
-      - alert-engine-1
-      - alert-engine-2
-      - gateway-1
-      - gateway-2
-    depends_on:
-      - mongodb
-      - elasticsearch
-    volumes:
-      - ${LICENCE_KEY_PATH}:/opt/graviteeio-management-api/license/license.key:ro
-      - ./keystores/keystore-management-api.jks:/secure/keystore.jks:ro
-      - ./management-api_gravitee.yml:/opt/graviteeio-management-api/config/gravitee.yml:ro
-      - <<: *pluginAEconnector
-        target: /opt/graviteeio-management-api/plugins/gravitee-alert-engine-connectors-ws-2.0.0.zip
-    environment:
-      - gravitee_management_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
-      - gravitee_analytics_elasticsearch_endpoints_0=http://elasticsearch:9200
-      - gravitee_plugins_path_0=$${gravitee.home}/plugins
-    networks:
-      - control-plan
-      - ae-1
-      - ae-2
+    management-ui:
+        image: ${APIM_REGISTRY:-graviteeio}/apim-management-ui:${APIM_VERSION:-latest}
+        ports:
+            - "8080:8080"
+        depends_on:
+            - management-api
+        environment:
+            - MGMT_API_URL=http://localhost:8081/management/organizations/DEFAULT/environments/DEFAULT/
+        networks:
+            - control-plan
 
-  management-ui:
-    image: ${APIM_REGISTRY:-graviteeio}/apim-management-ui:${APIM_VERSION:-latest}
-    ports:
-      - "8080:8080"
-    depends_on:
-      - management-api
-    environment:
-      - MGMT_API_URL=http://localhost:8081/management/organizations/DEFAULT/environments/DEFAULT/
-    networks:
-      - control-plan
+    alert-engine-1:
+        image: graviteeio/ae-engine:${AE_VERSION:-latest}
+        stop_grace_period: 5m
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://admin:adminadmin@localhost:18072/_node"]
+            interval: 20s
+            timeout: 10s
+            retries: 3
+        deploy:
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: 768M
+                reservations:
+                    cpus: "1"
+                    memory: 512M
+        environment:
+            - JAVA_OPTS=-Dlogging.level.com.graviteesource.ae.cluster.hz.channel.HazelcastChannelManager=DEBUG -Dlogging.level.com.graviteesource.ae.core.listener.EventListenerVerticle=DEBUG
+            - GIO_MIN_MEM=128m
+            - GIO_MAX_MEM=512m
+        volumes:
+            - ${LICENCE_KEY_PATH}:/opt/graviteeio-alert-engine/license/license.key:ro
+            - ./keystores/keystore-alert-engine-1.jks:/secure/keystore.jks:ro
+            - ./alert-engine_gravitee_1.yml:/opt/graviteeio-alert-engine/config/gravitee.yml:ro
+        networks:
+            - ae-1
 
-  alert-engine-1:
-    image: graviteeio/ae-engine:${AE_VERSION:-latest}
-    stop_grace_period: 5m
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://admin:adminadmin@localhost:18072/_node" ]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 768M
-        reservations:
-          cpus: '1'
-          memory: 512M
-    environment:
-      - JAVA_OPTS=-Dlogging.level.com.graviteesource.ae.cluster.hz.channel.HazelcastChannelManager=DEBUG -Dlogging.level.com.graviteesource.ae.core.listener.EventListenerVerticle=DEBUG
-      - GIO_MIN_MEM=128m
-      - GIO_MAX_MEM=512m
-    volumes:
-      - ${LICENCE_KEY_PATH}:/opt/graviteeio-alert-engine/license/license.key:ro
-      - ./keystores/keystore-alert-engine-1.jks:/secure/keystore.jks:ro
-      - ./alert-engine_gravitee_1.yml:/opt/graviteeio-alert-engine/config/gravitee.yml:ro
-    networks:
-      - ae-1
-
-  alert-engine-2:
-    image: graviteeio/ae-engine:${AE_VERSION:-latest}
-    stop_grace_period: 5m
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://admin:adminadmin@localhost:18072/_node" ]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 768M
-        reservations:
-          cpus: '1'
-          memory: 512M
-    environment:
-      - JAVA_OPTS=-Dlogging.level.com.graviteesource.ae.cluster.hz.channel.HazelcastChannelManager=DEBUG -Dlogging.level.com.graviteesource.ae.core.listener.EventListenerVerticle=DEBUG
-      - GIO_MIN_MEM=128m
-      - GIO_MAX_MEM=512m
-    volumes:
-      - ${LICENCE_KEY_PATH}:/opt/graviteeio-alert-engine/license/license.key:ro
-      - ./keystores/keystore-alert-engine-2.jks:/secure/keystore.jks:ro
-      - ./alert-engine_gravitee_2.yml:/opt/graviteeio-alert-engine/config/gravitee.yml:ro
-    networks:
-      - ae-2
+    alert-engine-2:
+        image: graviteeio/ae-engine:${AE_VERSION:-latest}
+        stop_grace_period: 5m
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://admin:adminadmin@localhost:18072/_node"]
+            interval: 20s
+            timeout: 10s
+            retries: 3
+        deploy:
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: 768M
+                reservations:
+                    cpus: "1"
+                    memory: 512M
+        environment:
+            - JAVA_OPTS=-Dlogging.level.com.graviteesource.ae.cluster.hz.channel.HazelcastChannelManager=DEBUG -Dlogging.level.com.graviteesource.ae.core.listener.EventListenerVerticle=DEBUG
+            - GIO_MIN_MEM=128m
+            - GIO_MAX_MEM=512m
+        volumes:
+            - ${LICENCE_KEY_PATH}:/opt/graviteeio-alert-engine/license/license.key:ro
+            - ./keystores/keystore-alert-engine-2.jks:/secure/keystore.jks:ro
+            - ./alert-engine_gravitee_2.yml:/opt/graviteeio-alert-engine/config/gravitee.yml:ro
+        networks:
+            - ae-2
