@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.1.0...2.2.0) (2025-03-07)
+
+
+### Features
+
+* **deps:** upgrade gravitee dependencies ([302ea78](https://github.com/gravitee-io/gravitee-ae-connectors/commit/302ea789e1b7b9b25da8f556ad1ac03ce1e4c5aa))
+
 # [2.1.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.0.0...2.1.0) (2023-03-20)
 
 
