@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>22.3.0</version>
+        <version>23.2.1</version>
     </parent>
 
     <groupId>io.gravitee.ae</groupId>
@@ -40,17 +40,16 @@
     </modules>
 
     <properties>
-        <gravitee-bom.version>8.2.17</gravitee-bom.version>
-        <gravitee-node.version>7.0.7</gravitee-node.version>
+        <gravitee-bom.version>8.3.0</gravitee-bom.version>
+        <gravitee-node.version>7.5.0</gravitee-node.version>
         <gravitee-plugin.version>4.7.0</gravitee-plugin.version>
         <gravitee-alert-api.version>2.1.0</gravitee-alert-api.version>
-        <prettier-maven-plugin.prettierJavaVersion>2.1.0</prettier-maven-plugin.prettierJavaVersion>
 
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
         <awaitability.version>4.3.0</awaitability.version>
 
         <skip.validation>false</skip.validation>
-        <jdk.version>17</jdk.version>
+        <jdk.version>21</jdk.version>
     </properties>
 
     <dependencyManagement>
@@ -150,7 +149,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
                 <configuration>
                     <source>${jdk.version}</source>
                     <target>${jdk.version}</target>
@@ -160,7 +158,6 @@
                 <groupId>com.hubspot.maven.plugins</groupId>
                 <artifactId>prettier-maven-plugin</artifactId>
                 <configuration>
-                    <prettierJavaVersion>${prettier-maven-plugin.prettierJavaVersion}</prettierJavaVersion>
                     <skip>${skip.validation}</skip>
                 </configuration>
                 <executions>
