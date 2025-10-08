@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.2.0...2.2.1) (2025-10-08)
+
+
+### Bug Fixes
+
+* **deps:** update dependency io.gravitee.alert:gravitee-alert-api to v2.1.18 ([07929a7](https://github.com/gravitee-io/gravitee-ae-connectors/commit/07929a7175d4ad0cc8c3c31f66a8f64d5ef96fca))
+
 # [2.2.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.1.0...2.2.0) (2025-03-07)
 
 
