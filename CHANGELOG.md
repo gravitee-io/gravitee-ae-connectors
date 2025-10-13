@@ -1,3 +1,10 @@
+## [2.2.2](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.2.1...2.2.2) (2025-10-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency io.gravitee:gravitee-parent to v22.6.0 ([235b31a](https://github.com/gravitee-io/gravitee-ae-connectors/commit/235b31a2a4e0f5d694998ca6abd01828b6f40093))
+
 ## [2.2.1](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.2.0...2.2.1) (2025-10-08)
 
 
