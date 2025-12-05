@@ -1,3 +1,10 @@
+## [2.2.3](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.2.2...2.2.3) (2025-12-05)
+
+
+### Bug Fixes
+
+* **deps:** update dependency io.gravitee.node:gravitee-node to v7.18.0 ([2746617](https://github.com/gravitee-io/gravitee-ae-connectors/commit/2746617525ed04db6f482455495ab2e0f645ee0a))
+
 ## [2.2.2](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.2.1...2.2.2) (2025-10-13)
 
 
