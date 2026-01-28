@@ -23,6 +23,7 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.WebSocketClient;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -40,6 +41,7 @@ public abstract class AbstractConnector<T> extends AbstractLifecycleComponent<T>
 
     private final Logger logger = LoggerFactory.getLogger(AbstractConnector.class);
     protected HttpClient httpClient;
+    protected WebSocketClient webSocketClient;
 
     @Autowired
     protected Vertx vertx;
@@ -62,6 +64,13 @@ public abstract class AbstractConnector<T> extends AbstractLifecycleComponent<T>
                 logger.warn(ise.getMessage());
             }
         }
+        if (webSocketClient != null) {
+            try {
+                webSocketClient.close();
+            } catch (IllegalStateException ise) {
+                logger.warn(ise.getMessage());
+            }
+        }
     }
 
     public abstract Future<Void> writeTextMessage(String text);
@@ -69,7 +78,13 @@ public abstract class AbstractConnector<T> extends AbstractLifecycleComponent<T>
     protected void initHttpClient(Engine engine) {
         Assert.notNull(engine, "Engine can not be null");
         Endpoint endpoint = engine.nextEndpoint();
-        httpClient = vertx.createHttpClient(engine.getHttpClientOptions(endpoint));
+        httpClient = vertx.createHttpClient(engine.getHttpClientOptions(endpoint), engine.getHttpPoolOptions());
+    }
+
+    protected void initWebSocketClient(Engine engine) {
+        Assert.notNull(engine, "Engine can not be null");
+        Endpoint endpoint = engine.nextEndpoint();
+        webSocketClient = vertx.createWebSocketClient(engine.getWebSocketClientOptions(endpoint));
     }
 
     protected MultiMap getDefaultHeaders(Engine engine) {
@@ -77,8 +92,10 @@ public abstract class AbstractConnector<T> extends AbstractLifecycleComponent<T>
 
         // Read configuration to authenticate calls to Elasticsearch (basic authentication only)
         if (engine.getSecurity().getUsername() != null) {
-            String basicAuthorizationHeader =
-                this.initEncodedAuthorization(engine.getSecurity().getUsername(), engine.getSecurity().getPassword());
+            String basicAuthorizationHeader = this.initEncodedAuthorization(
+                engine.getSecurity().getUsername(),
+                engine.getSecurity().getPassword()
+            );
             headers.set(HttpHeaders.AUTHORIZATION, basicAuthorizationHeader);
         }
 
