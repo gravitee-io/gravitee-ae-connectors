@@ -24,12 +24,12 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>22.6.0</version>
+        <version>23.5.0</version>
     </parent>
 
     <groupId>io.gravitee.ae</groupId>
     <artifactId>gravitee-alert-engine-connectors</artifactId>
-    <version>2.3.1</version>
+    <version>2.3.0</version>
     <packaging>pom</packaging>
     <name>Gravitee.io - Alert Engine - Connectors</name>
 
@@ -40,17 +40,15 @@
     </modules>
 
     <properties>
-        <gravitee-bom.version>8.3.62</gravitee-bom.version>
-        <gravitee-node.version>8.0.7</gravitee-node.version>
-        <gravitee-plugin.version>4.7.0</gravitee-plugin.version>
-        <gravitee-alert-api.version>2.1.18</gravitee-alert-api.version>
-        <prettier-maven-plugin.prettierJavaVersion>2.1.0</prettier-maven-plugin.prettierJavaVersion>
+        <gravitee-bom.version>9.0.0-beta.2</gravitee-bom.version>
+        <gravitee-node.version>8.0.0-beta.2</gravitee-node.version>
+        <gravitee-plugin.version>4.10.0</gravitee-plugin.version>
+        <gravitee-alert-api.version>2.1.22</gravitee-alert-api.version>
 
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
         <awaitability.version>4.3.0</awaitability.version>
 
         <skip.validation>false</skip.validation>
-        <jdk.version>17</jdk.version>
     </properties>
 
     <dependencyManagement>
@@ -130,48 +128,4 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.12.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.4</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.1</version>
-                <configuration>
-                    <source>${jdk.version}</source>
-                    <target>${jdk.version}</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.hubspot.maven.plugins</groupId>
-                <artifactId>prettier-maven-plugin</artifactId>
-                <configuration>
-                    <prettierJavaVersion>${prettier-maven-plugin.prettierJavaVersion}</prettierJavaVersion>
-                    <skip>${skip.validation}</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

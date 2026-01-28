@@ -17,6 +17,8 @@ package io.gravitee.ae.connector.ws.configuration;
 
 import io.gravitee.ae.connector.ws.Endpoint;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.PoolOptions;
+import io.vertx.core.http.WebSocketClientOptions;
 import io.vertx.core.net.*;
 import java.net.URI;
 import java.util.HashMap;
@@ -61,38 +63,72 @@ public class Engine {
 
     public HttpClientOptions getHttpClientOptions(Endpoint endpoint) {
         URI target = URI.create(endpoint.getUrl());
-        final int port = target.getPort() != -1
-            ? target.getPort()
-            : (HTTPS_SCHEME.equals(target.getScheme()) ? DEFAULT_HTTPS_PORT : DEFAULT_HTTP_PORT);
         HttpClientOptions httpClientOptions = new HttpClientOptions();
         httpClientOptions.setConnectTimeout(connectorConfiguration.getConnectTimeout());
-        httpClientOptions.setDefaultPort(port);
+        httpClientOptions.setDefaultPort(resolvePort(target));
         httpClientOptions.setDefaultHost(target.getHost());
-        httpClientOptions.setMaxPoolSize(connectorConfiguration.getMaxPoolSize());
         httpClientOptions.setIdleTimeout(connectorConfiguration.getIdleTimeout());
         httpClientOptions.setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
         httpClientOptions.setPipelining(connectorConfiguration.isPipelining());
         httpClientOptions.setKeepAlive(connectorConfiguration.isKeepAlive());
-        httpClientOptions.setTryUseCompression(connectorConfiguration.isTryCompression());
+        httpClientOptions.setDecompressionSupported(connectorConfiguration.isTryCompression());
 
-        if (HTTPS_SCHEME.equalsIgnoreCase(target.getScheme())) {
-            // Configure SSL
+        if (isHttps(target)) {
             httpClientOptions.setSsl(true);
             httpClientOptions.setTrustAll(sslConfig.isTrustAll());
             httpClientOptions.setVerifyHost(sslConfig.isHostnameVerifier());
-            setKeyStoreOptions(httpClientOptions);
-            setTruststoreOptions(httpClientOptions);
+            configureSslCertificates(httpClientOptions);
         }
 
         setProxyOptions(target, httpClientOptions);
         return httpClientOptions;
     }
 
-    private void setProxyOptions(URI target, HttpClientOptions httpClientOptions) {
+    public PoolOptions getHttpPoolOptions() {
+        return new PoolOptions().setHttp1MaxSize(connectorConfiguration.getMaxPoolSize());
+    }
+
+    public WebSocketClientOptions getWebSocketClientOptions(Endpoint endpoint) {
+        URI target = URI.create(endpoint.getUrl());
+        WebSocketClientOptions webSocketClientOptions = new WebSocketClientOptions();
+        webSocketClientOptions.setConnectTimeout(connectorConfiguration.getConnectTimeout());
+        webSocketClientOptions.setDefaultPort(resolvePort(target));
+        webSocketClientOptions.setDefaultHost(target.getHost());
+        webSocketClientOptions.setIdleTimeout(connectorConfiguration.getIdleTimeout());
+        webSocketClientOptions.setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
+        webSocketClientOptions.setMaxConnections(connectorConfiguration.getMaxPoolSize());
+
+        if (isHttps(target)) {
+            webSocketClientOptions.setSsl(true);
+            webSocketClientOptions.setTrustAll(sslConfig.isTrustAll());
+            webSocketClientOptions.setVerifyHost(sslConfig.isHostnameVerifier());
+            configureSslCertificates(webSocketClientOptions);
+        }
+
+        setProxyOptions(target, webSocketClientOptions);
+        return webSocketClientOptions;
+    }
+
+    private int resolvePort(URI target) {
+        return target.getPort() != -1
+            ? target.getPort()
+            : (HTTPS_SCHEME.equals(target.getScheme()) ? DEFAULT_HTTPS_PORT : DEFAULT_HTTP_PORT);
+    }
+
+    private boolean isHttps(URI target) {
+        return HTTPS_SCHEME.equalsIgnoreCase(target.getScheme());
+    }
+
+    private void configureSslCertificates(TCPSSLOptions options) {
+        setKeyStoreOptions(options);
+        setTruststoreOptions(options);
+    }
+
+    private void setProxyOptions(URI target, ClientOptionsBase clientOptions) {
         if (connectorConfiguration.isUseSystemProxy()) {
             ProxyOptions proxyOptions = new ProxyOptions().setType(ProxyType.valueOf(connectorConfiguration.getProxyType()));
             if (HTTPS_SCHEME.equals(target.getScheme())) {
-                httpClientOptions.setProxyOptions(
+                clientOptions.setProxyOptions(
                     proxyOptions
                         .setHost(connectorConfiguration.getProxyHttpsHost())
                         .setPort(connectorConfiguration.getProxyHttpsPort())
@@ -100,7 +136,7 @@ public class Engine {
                         .setPassword(connectorConfiguration.getProxyHttpsPassword())
                 );
             } else {
-                httpClientOptions.setProxyOptions(
+                clientOptions.setProxyOptions(
                     proxyOptions
                         .setHost(connectorConfiguration.getProxyHttpHost())
                         .setPort(connectorConfiguration.getProxyHttpPort())
@@ -111,21 +147,21 @@ public class Engine {
         }
     }
 
-    private void setTruststoreOptions(HttpClientOptions httpClientOptions) {
+    private void setTruststoreOptions(TCPSSLOptions tcpSslOptions) {
         if (sslConfig.getTruststoreType() != null) {
             switch (sslConfig.getTruststoreType().toUpperCase()) {
                 case KEYSTORE_FORMAT_JKS:
-                    httpClientOptions.setTrustStoreOptions(
+                    tcpSslOptions.setTrustOptions(
                         new JksOptions().setPath(sslConfig.getTruststorePath()).setPassword(sslConfig.getTruststorePassword())
                     );
                     break;
                 case KEYSTORE_FORMAT_PKCS12:
-                    httpClientOptions.setPfxTrustOptions(
+                    tcpSslOptions.setTrustOptions(
                         new PfxOptions().setPath(sslConfig.getTruststorePath()).setPassword(sslConfig.getTruststorePassword())
                     );
                     break;
                 case KEYSTORE_FORMAT_PEM:
-                    httpClientOptions.setPemTrustOptions(new PemTrustOptions().addCertPath(sslConfig.getTruststorePath()));
+                    tcpSslOptions.setTrustOptions(new PemTrustOptions().addCertPath(sslConfig.getTruststorePath()));
                     break;
                 default:
                     //Do nothing
@@ -134,21 +170,21 @@ public class Engine {
         }
     }
 
-    private void setKeyStoreOptions(HttpClientOptions httpClientOptions) {
+    private void setKeyStoreOptions(TCPSSLOptions tcpSslOptions) {
         if (sslConfig.getKeystoreType() != null) {
             switch (sslConfig.getKeystoreType().toUpperCase()) {
                 case KEYSTORE_FORMAT_JKS:
-                    httpClientOptions.setKeyStoreOptions(
+                    tcpSslOptions.setKeyCertOptions(
                         new JksOptions().setPath(sslConfig.getKeystorePath()).setPassword(sslConfig.getKeystorePassword())
                     );
                     break;
                 case KEYSTORE_FORMAT_PKCS12:
-                    httpClientOptions.setPfxKeyCertOptions(
+                    tcpSslOptions.setKeyCertOptions(
                         new PfxOptions().setPath(sslConfig.getKeystorePath()).setPassword(sslConfig.getKeystorePassword())
                     );
                     break;
                 case KEYSTORE_FORMAT_PEM:
-                    httpClientOptions.setPemKeyCertOptions(
+                    tcpSslOptions.setKeyCertOptions(
                         new PemKeyCertOptions().setCertPaths(sslConfig.getKeystorePemCerts()).setKeyPaths(sslConfig.getKeystorePemKeys())
                     );
                     break;

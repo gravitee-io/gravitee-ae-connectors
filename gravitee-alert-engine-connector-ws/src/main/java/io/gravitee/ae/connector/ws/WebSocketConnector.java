@@ -24,6 +24,7 @@ import io.gravitee.alert.api.trigger.TriggerProvider;
 import io.gravitee.node.api.Node;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
+import io.vertx.circuitbreaker.RetryPolicy;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
@@ -75,16 +76,15 @@ public class WebSocketConnector extends AbstractConnector<WebSocketConnector> {
         if (enabled) {
             logger.info("AlertEngine connector is enabled. Starting WS connector.");
 
-            circuitBreaker =
-                CircuitBreaker.create(
-                    "alert-engine-event-producer",
-                    vertx,
-                    new CircuitBreakerOptions().setMaxRetries(Integer.MAX_VALUE).setNotificationAddress(null)
-                );
+            circuitBreaker = CircuitBreaker.create(
+                "alert-engine-event-producer",
+                vertx,
+                new CircuitBreakerOptions().setMaxRetries(Integer.MAX_VALUE).setNotificationAddress(null)
+            );
 
             // Back-off retry
             // TODO use jitter
-            circuitBreaker.retryPolicy(integer -> 5000L);
+            circuitBreaker.retryPolicy(RetryPolicy.constantDelay(5000L));
 
             connect();
         } else {
@@ -111,58 +111,51 @@ public class WebSocketConnector extends AbstractConnector<WebSocketConnector> {
 
                     // Initialize ping-pong
                     // See RFC 6455 Section <a href="https://tools.ietf.org/html/rfc6455#section-5.5.2"
-                    pongHandlerId =
-                        vertx.setPeriodic(
-                            PING_HANDLER_DELAY,
-                            aLong -> webSocket.writePing(Buffer.buffer(node.id() + " - " + node.hostname()))
-                        );
+                    pongHandlerId = vertx.setPeriodic(PING_HANDLER_DELAY, aLong ->
+                        webSocket.writePing(Buffer.buffer(node.id() + " - " + node.hostname()))
+                    );
 
                     if (discovery) {
                         logger.info("Discovery mode is enabled, listening for alert engine instances...");
                     }
 
                     WebSocketConnector.this.webSocket.handler(buffer -> {
-                            final String sCommand = buffer.toString();
+                        final String sCommand = buffer.toString();
 
-                            try {
-                                Command command = DatabindCodec.mapper().readValue(sCommand, Command.class);
+                        try {
+                            Command command = DatabindCodec.mapper().readValue(sCommand, Command.class);
 
-                                commandHandlerManager.handle(
-                                    command,
-                                    result -> {
-                                        if (result != null) {
-                                            WebSocketConnector.this.webSocket.writeTextMessage(
-                                                    "reply:" + command.id() + ":" + Json.encode(result)
-                                                );
-                                        }
-                                    }
-                                );
-                            } catch (IOException ioe) {
-                                logger.error("Unexpected error while reading command: {}", sCommand, ioe);
-                            }
-                        });
+                            commandHandlerManager.handle(command, result -> {
+                                if (result != null) {
+                                    WebSocketConnector.this.webSocket.writeTextMessage("reply:" + command.id() + ":" + Json.encode(result));
+                                }
+                            });
+                        } catch (IOException ioe) {
+                            logger.error("Unexpected error while reading command: {}", sCommand, ioe);
+                        }
+                    });
 
                     WebSocketConnector.this.webSocket.exceptionHandler(throwable ->
-                            logger.error("An error occurred on the websocket connection", throwable)
-                        );
+                        logger.error("An error occurred on the websocket connection", throwable)
+                    );
 
                     WebSocketConnector.this.webSocket.pongHandler(data -> logger.debug("Get a pong from Alert Engine server"));
 
                     WebSocketConnector.this.webSocket.closeHandler(event1 -> {
-                            logger.debug("Connection to Alert Engine server has been closed.");
+                        logger.debug("Connection to Alert Engine server has been closed.");
 
-                            if (pongHandlerId != 0L) {
-                                vertx.cancelTimer(pongHandlerId);
-                            }
+                        if (pongHandlerId != 0L) {
+                            vertx.cancelTimer(pongHandlerId);
+                        }
 
-                            // Release reference to the websocket connection
-                            WebSocketConnector.this.webSocket = null;
+                        // Release reference to the websocket connection
+                        WebSocketConnector.this.webSocket = null;
 
-                            invokeOnDisconnectionListeners();
+                        invokeOnDisconnectionListeners();
 
-                            // How to force to reconnect ?
-                            connect();
-                        });
+                        // How to force to reconnect ?
+                        connect();
+                    });
 
                     invokeOnConnectionListeners();
                 } else {
@@ -186,7 +179,7 @@ public class WebSocketConnector extends AbstractConnector<WebSocketConnector> {
     }
 
     private void doConnect(Promise<WebSocket> webSocketPromise) {
-        initHttpClient(engine);
+        initWebSocketClient(engine);
         Endpoint endpoint = engine.currentEndpoint();
 
         if (endpoint != null) {
@@ -219,8 +212,8 @@ public class WebSocketConnector extends AbstractConnector<WebSocketConnector> {
                 }
             }
 
-            httpClient
-                .webSocket(webSocketConnectOptions)
+            webSocketClient
+                .connect(webSocketConnectOptions)
                 .onSuccess(ws -> {
                     // Re-init endpoint counter
                     engine.resetEndpointRetryCount(endpoint);
@@ -236,8 +229,8 @@ public class WebSocketConnector extends AbstractConnector<WebSocketConnector> {
                     );
                     webSocketPromise.fail(throwable);
 
-                    // Force the HTTP client to close after a defect
-                    httpClient.close();
+                    // Force the WebSocket client to close after a defect
+                    webSocketClient.close();
                 });
         }
     }
