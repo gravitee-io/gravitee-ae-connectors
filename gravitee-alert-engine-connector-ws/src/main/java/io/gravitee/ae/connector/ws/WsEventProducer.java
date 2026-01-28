@@ -27,10 +27,10 @@ import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import io.vertx.core.impl.ConcurrentHashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ public class WsEventProducer extends AbstractEventProducer implements Applicatio
     private Context context;
 
     // Keep a copy of events while waiting for producer being started
-    private final Set<Event> pendingEvents = new ConcurrentHashSet<>();
+    private final Set<Event> pendingEvents = ConcurrentHashMap.newKeySet();
 
     private FlowableEmitter<Event> eventEmitter;
 
@@ -97,9 +97,9 @@ public class WsEventProducer extends AbstractEventProducer implements Applicatio
     protected void doStart() throws Exception {
         context = contextBuilder.build();
 
-        final Flowable<Event> bufferedEvents = Flowable
-            .create(this::prepareEventEmitter, BackpressureStrategy.LATEST)
-            .doOnNext(this::copyContextToEvent);
+        final Flowable<Event> bufferedEvents = Flowable.create(this::prepareEventEmitter, BackpressureStrategy.LATEST).doOnNext(
+            this::copyContextToEvent
+        );
 
         logger.info("AlertEngine connector is enabled. Starting connector.");
         Engine defaultEngine = configuration.getDefaultEngine(); // event producer only send the events to the default engine
