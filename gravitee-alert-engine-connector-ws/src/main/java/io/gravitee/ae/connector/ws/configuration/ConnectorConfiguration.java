@@ -19,15 +19,14 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 import io.gravitee.ae.connector.ws.Endpoint;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
-import org.springframework.core.env.MapPropertySource;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -43,6 +42,12 @@ public class ConnectorConfiguration {
     public ConnectorConfiguration(Environment environment) {
         this.environment = environment;
     }
+
+    /**
+     * Specifies whether default filters are enabled. Defaults to `true`.
+     */
+    @Value("${alerts.alert-engine.ws.defaultFilters.enabled:true}")
+    private boolean defaultFiltersEnabled;
 
     /**
      * Alert Engine basic auth login.
@@ -626,5 +631,13 @@ public class ConnectorConfiguration {
     public ConnectorConfiguration setProxyHttpsPassword(String proxyHttpsPassword) {
         this.proxyHttpsPassword = proxyHttpsPassword;
         return this;
+    }
+
+    public boolean isDefaultFiltersEnabled() {
+        return defaultFiltersEnabled;
+    }
+
+    public void setDefaultFiltersEnabled(boolean defaultFiltersEnabled) {
+        this.defaultFiltersEnabled = defaultFiltersEnabled;
     }
 }
