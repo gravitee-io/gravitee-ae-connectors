@@ -68,19 +68,21 @@ public class WsTriggerProvider extends AbstractTriggerProvider implements Applic
     @Override
     public void register(Trigger trigger) {
         try {
-            final String installationId = context != null ? context.get(Context.CONTEXT_INSTALLATION) : null;
-            if (installationId != null) {
-                // Automatically add a constraint on the installation.
-                final StringCondition installationFilter = StringCondition.equals(Context.CONTEXT_INSTALLATION, installationId).build();
+            if (connectorConfiguration.isDefaultFiltersEnabled()) {
+                final String installationId = context != null ? context.get(Context.CONTEXT_INSTALLATION) : null;
+                if (installationId != null) {
+                    // Automatically add a constraint on the installation.
+                    final StringCondition installationFilter = StringCondition.equals(Context.CONTEXT_INSTALLATION, installationId).build();
 
-                if (trigger.getFilters() == null) {
-                    trigger.setFilters(new ArrayList<>());
-                } else {
-                    // Create a new collection and make sure we will be able to add the filter (ie: get rid of SingletonList, UnmodifiableList, ...).
-                    trigger.setFilters(new ArrayList<>(trigger.getFilters()));
+                    if (trigger.getFilters() == null) {
+                        trigger.setFilters(new ArrayList<>());
+                    } else {
+                        // Create a new collection and make sure we will be able to add the filter (ie: get rid of SingletonList, UnmodifiableList, ...).
+                        trigger.setFilters(new ArrayList<>(trigger.getFilters()));
+                    }
+
+                    trigger.getFilters().add(installationFilter);
                 }
-
-                trigger.getFilters().add(installationFilter);
             }
 
             String value = mapper.writeValueAsString(trigger);
