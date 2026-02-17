@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.2.3...2.3.0) (2026-02-17)
+
+
+### Features
+
+* add default filters flag to enable default filters in WsTriggerProvider ([09b8a64](https://github.com/gravitee-io/gravitee-ae-connectors/commit/09b8a6469529ea6f8c9cb698694c93a2ae66b0ce))
+
 ## [2.2.3](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.2.2...2.2.3) (2025-12-05)
 
 
