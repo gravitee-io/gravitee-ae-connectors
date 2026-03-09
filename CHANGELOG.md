@@ -1,3 +1,20 @@
+# [3.0.0-beta.1](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.3.0...3.0.0-beta.1) (2026-03-09)
+
+
+### Bug Fixes
+
+* **deps:** update gravitee orb ([6a4586c](https://github.com/gravitee-io/gravitee-ae-connectors/commit/6a4586c1868b371dc31833d971172a26bfe92c1c))
+
+
+### Features
+
+* upgrade to Vert.x 5 (and update dependencies) ([24c4d15](https://github.com/gravitee-io/gravitee-ae-connectors/commit/24c4d155420c5f4fec9632d5681d0511a0c2e47e))
+
+
+### BREAKING CHANGES
+
+* upgrade to Vert.x 5
+
 # [2.3.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.2.3...2.3.0) (2026-02-17)
 
 
