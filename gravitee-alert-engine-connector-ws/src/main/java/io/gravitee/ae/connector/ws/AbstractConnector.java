@@ -92,10 +92,8 @@ public abstract class AbstractConnector<T> extends AbstractLifecycleComponent<T>
 
         // Read configuration to authenticate calls to Elasticsearch (basic authentication only)
         if (engine.getSecurity().getUsername() != null) {
-            String basicAuthorizationHeader = this.initEncodedAuthorization(
-                engine.getSecurity().getUsername(),
-                engine.getSecurity().getPassword()
-            );
+            String basicAuthorizationHeader =
+                this.initEncodedAuthorization(engine.getSecurity().getUsername(), engine.getSecurity().getPassword());
             headers.set(HttpHeaders.AUTHORIZATION, basicAuthorizationHeader);
         }
 

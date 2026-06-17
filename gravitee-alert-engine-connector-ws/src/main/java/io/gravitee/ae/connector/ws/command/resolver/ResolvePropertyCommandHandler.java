@@ -46,9 +46,12 @@ public class ResolvePropertyCommandHandler implements CommandHandler<ResolveProp
             .findFirst();
 
         optListener.ifPresent(listener ->
-            listener.doOnCommand(new io.gravitee.alert.api.trigger.command.ResolvePropertyCommand(command.getProperties()), result -> {
-                resultHandler.handle(result);
-            })
+            listener.doOnCommand(
+                new io.gravitee.alert.api.trigger.command.ResolvePropertyCommand(command.getProperties()),
+                result -> {
+                    resultHandler.handle(result);
+                }
+            )
         );
     }
 }
