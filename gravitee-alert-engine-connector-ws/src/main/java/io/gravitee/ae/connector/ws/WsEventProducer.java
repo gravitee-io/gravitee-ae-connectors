@@ -97,9 +97,9 @@ public class WsEventProducer extends AbstractEventProducer implements Applicatio
     protected void doStart() throws Exception {
         context = contextBuilder.build();
 
-        final Flowable<Event> bufferedEvents = Flowable.create(this::prepareEventEmitter, BackpressureStrategy.LATEST).doOnNext(
-            this::copyContextToEvent
-        );
+        final Flowable<Event> bufferedEvents = Flowable
+            .create(this::prepareEventEmitter, BackpressureStrategy.LATEST)
+            .doOnNext(this::copyContextToEvent);
 
         logger.info("AlertEngine connector is enabled. Starting connector.");
         Engine defaultEngine = configuration.getDefaultEngine(); // event producer only send the events to the default engine

@@ -249,19 +249,20 @@ public class ConnectorConfiguration {
         Map<String, Engine> result = new HashMap<>();
 
         // try first with engines tag
-        final var engineNames = ((AbstractEnvironment) environment).getPropertySources()
-            .stream()
-            .filter(propertySource -> propertySource instanceof EnumerablePropertySource)
-            .filter(propertySource -> propertySource.getSource() instanceof Map)
-            .flatMap(propertySource ->
-                ((EnumerablePropertySource<Map<?, ?>>) propertySource).getSource().keySet().stream().map(String::valueOf)
-            )
-            .filter(key -> key.startsWith(keyInitial))
-            .map(key -> {
-                String replace = key.replace(keyInitial, "");
-                return replace.substring(0, replace.indexOf("."));
-            })
-            .collect(toSet());
+        final var engineNames =
+            ((AbstractEnvironment) environment).getPropertySources()
+                .stream()
+                .filter(propertySource -> propertySource instanceof EnumerablePropertySource)
+                .filter(propertySource -> propertySource.getSource() instanceof Map)
+                .flatMap(propertySource ->
+                    ((EnumerablePropertySource<Map<?, ?>>) propertySource).getSource().keySet().stream().map(String::valueOf)
+                )
+                .filter(key -> key.startsWith(keyInitial))
+                .map(key -> {
+                    String replace = key.replace(keyInitial, "");
+                    return replace.substring(0, replace.indexOf("."));
+                })
+                .collect(toSet());
 
         engineNames.forEach(name -> {
             String key = String.format("%s%s", keyInitial, name);
