@@ -1,3 +1,10 @@
+## [2.3.1](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.3.0...2.3.1) (2026-06-17)
+
+
+### Bug Fixes
+
+* bump gravitee-bom to 8.3.62 and gravitee-node to 8.0.7 ([299b537](https://github.com/gravitee-io/gravitee-ae-connectors/commit/299b53734595a42ccd30519019b5537f88e2687f))
+
 # [2.3.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.2.3...2.3.0) (2026-02-17)
 
 
