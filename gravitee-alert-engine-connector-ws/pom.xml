@@ -176,7 +176,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.8.0</version>
                 <configuration>
                     <finalName>gravitee-ae-connectors-ws-${project.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
