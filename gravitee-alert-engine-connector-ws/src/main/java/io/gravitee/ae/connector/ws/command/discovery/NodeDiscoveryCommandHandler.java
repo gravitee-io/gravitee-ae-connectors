@@ -21,8 +21,8 @@ import io.gravitee.ae.connector.api.command.NodeDiscoveryCommand;
 import io.gravitee.ae.connector.ws.command.CommandHandler;
 import io.gravitee.ae.connector.ws.configuration.ConnectorConfiguration;
 import io.gravitee.ae.connector.ws.configuration.Engine;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -35,7 +35,7 @@ public class NodeDiscoveryCommandHandler implements CommandHandler<NodeDiscovery
     /**
      * Logger.
      */
-    private final Logger logger = LoggerFactory.getLogger(NodeDiscoveryCommandHandler.class);
+    private final Logger logger = NodeLoggerFactory.getLogger(NodeDiscoveryCommandHandler.class);
 
     private static final String DISCOVERY_NODE_REMOVED = "REMOVE";
     private static final String DISCOVERY_NODE_CHANGED = "CHANGE";

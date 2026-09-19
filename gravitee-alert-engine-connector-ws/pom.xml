@@ -36,6 +36,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-logging</artifactId>
+            <version>${gravitee-node.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- GraviteeSource dependencies -->
         <dependency>
             <groupId>io.gravitee.ae</groupId>

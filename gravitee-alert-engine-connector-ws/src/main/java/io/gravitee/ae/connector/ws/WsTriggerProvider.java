@@ -25,11 +25,11 @@ import io.gravitee.alert.api.condition.StringCondition;
 import io.gravitee.alert.api.event.Context;
 import io.gravitee.alert.api.trigger.AbstractTriggerProvider;
 import io.gravitee.alert.api.trigger.Trigger;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -44,7 +44,7 @@ public class WsTriggerProvider extends AbstractTriggerProvider implements Applic
     /**
      * Logger.
      */
-    private final Logger logger = LoggerFactory.getLogger(WsTriggerProvider.class);
+    private final Logger logger = NodeLoggerFactory.getLogger(WsTriggerProvider.class);
 
     public static final String WS_TRIGGER_PATH = "/ws/triggers";
 

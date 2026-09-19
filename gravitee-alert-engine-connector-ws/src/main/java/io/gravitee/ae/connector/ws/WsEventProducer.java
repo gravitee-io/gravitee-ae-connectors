@@ -23,6 +23,7 @@ import io.gravitee.ae.connector.ws.configuration.Engine;
 import io.gravitee.ae.connector.ws.listener.ListenerManager;
 import io.gravitee.alert.api.event.*;
 import io.gravitee.node.api.healthcheck.ProbeManager;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableEmitter;
@@ -33,7 +34,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -45,7 +45,7 @@ import org.springframework.context.ApplicationContextAware;
  */
 public class WsEventProducer extends AbstractEventProducer implements ApplicationContextAware {
 
-    private final Logger logger = LoggerFactory.getLogger(WsEventProducer.class);
+    private final Logger logger = NodeLoggerFactory.getLogger(WsEventProducer.class);
 
     private static final int MAX_PENDING_EVENTS = 1000;
     public static final String WS_EVENT_PATH = "/ws/events";

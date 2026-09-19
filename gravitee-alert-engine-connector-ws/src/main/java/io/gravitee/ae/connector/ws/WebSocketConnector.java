@@ -22,6 +22,7 @@ import io.gravitee.ae.connector.ws.listener.ListenerManager;
 import io.gravitee.alert.api.event.EventProducer;
 import io.gravitee.alert.api.trigger.TriggerProvider;
 import io.gravitee.node.api.Node;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.circuitbreaker.RetryPolicy;
@@ -37,7 +38,6 @@ import io.vertx.core.net.ProxyType;
 import java.io.IOException;
 import java.net.URI;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -47,7 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class WebSocketConnector extends AbstractConnector<WebSocketConnector> {
 
     private static final String HTTPS_SCHEME = "https";
-    private final Logger logger = LoggerFactory.getLogger(WebSocketConnector.class);
+    private final Logger logger = NodeLoggerFactory.getLogger(WebSocketConnector.class);
 
     private static final long PING_HANDLER_DELAY = 5000;
 
