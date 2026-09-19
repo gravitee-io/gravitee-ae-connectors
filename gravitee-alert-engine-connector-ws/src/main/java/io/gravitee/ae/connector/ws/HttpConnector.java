@@ -16,13 +16,13 @@
 package io.gravitee.ae.connector.ws;
 
 import io.gravitee.ae.connector.ws.configuration.Engine;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 public class HttpConnector extends AbstractConnector<HttpConnector> {
 
-    private final Logger logger = LoggerFactory.getLogger(HttpConnector.class);
+    private final Logger logger = NodeLoggerFactory.getLogger(HttpConnector.class);
 
     private final Engine engine;
     private final String path;

@@ -17,12 +17,12 @@ package io.gravitee.ae.connector.ws.command;
 
 import io.gravitee.ae.connector.api.command.Command;
 import io.gravitee.ae.connector.api.command.Handler;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -34,7 +34,7 @@ public class CommandHandlerManagerImpl implements CommandHandlerManager {
     /**
      * Logger.
      */
-    private final Logger logger = LoggerFactory.getLogger(CommandHandlerManagerImpl.class);
+    private final Logger logger = NodeLoggerFactory.getLogger(CommandHandlerManagerImpl.class);
 
     @Autowired
     private List<CommandHandler<? extends Command>> commandHandlers;

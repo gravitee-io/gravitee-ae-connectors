@@ -16,6 +16,7 @@
 package io.gravitee.ae.connector.ws.configuration;
 
 import io.gravitee.ae.connector.ws.Endpoint;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.PoolOptions;
 import io.vertx.core.http.WebSocketClientOptions;
@@ -28,7 +29,6 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Kamiel Ahmadpour (kamiel.ahmadpour at graviteesource.com)
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Engine {
 
-    private static final Logger logger = LoggerFactory.getLogger(Engine.class);
+    private static final Logger logger = NodeLoggerFactory.getLogger(Engine.class);
     private static final String KEYSTORE_FORMAT_JKS = "JKS";
     private static final String KEYSTORE_FORMAT_PEM = "PEM";
     private static final String KEYSTORE_FORMAT_PKCS12 = "PKCS12";

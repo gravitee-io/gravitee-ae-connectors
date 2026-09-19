@@ -19,6 +19,7 @@ import io.gravitee.ae.connector.ws.configuration.ConnectorConfiguration;
 import io.gravitee.ae.connector.ws.configuration.Engine;
 import io.gravitee.common.component.AbstractLifecycleComponent;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -28,7 +29,6 @@ import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.Assert;
@@ -39,7 +39,7 @@ import org.springframework.util.Assert;
  */
 public abstract class AbstractConnector<T> extends AbstractLifecycleComponent<T> {
 
-    private final Logger logger = LoggerFactory.getLogger(AbstractConnector.class);
+    private final Logger logger = NodeLoggerFactory.getLogger(AbstractConnector.class);
     protected HttpClient httpClient;
     protected WebSocketClient webSocketClient;
 
