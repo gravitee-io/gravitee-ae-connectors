@@ -68,20 +68,7 @@
                 <artifactId>gravitee-alert-api</artifactId>
                 <version>${gravitee-alert-api.version}</version>
             </dependency>
-            <dependency>
-                <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin</artifactId>
-                <version>${gravitee-plugin.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.gravitee.node</groupId>
-                <artifactId>gravitee-node</artifactId>
-                <version>${gravitee-node.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+            
         </dependencies>
     </dependencyManagement>
 
