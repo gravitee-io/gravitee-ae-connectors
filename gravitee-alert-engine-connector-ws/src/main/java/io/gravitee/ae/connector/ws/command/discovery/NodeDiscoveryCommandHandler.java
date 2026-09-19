@@ -60,7 +60,12 @@ public class NodeDiscoveryCommandHandler implements CommandHandler<NodeDiscovery
             if (DISCOVERY_NODE_CHANGED.equalsIgnoreCase(command.getAction())) {
                 // Endpoint must be registered only if target does not already exist
 
-                if (defaultEngine.getEndpoints().stream().noneMatch(edpt -> edpt.getUrl().equals(websocketEndpoint.getUrl()))) {
+                if (
+                    defaultEngine
+                        .getEndpoints()
+                        .stream()
+                        .noneMatch(edpt -> edpt.getUrl().equals(websocketEndpoint.getUrl()))
+                ) {
                     logger.info("An alert engine instance has been discovered at {}", websocketEndpoint.getUrl());
                     defaultEngine.getEndpoints().add(websocketEndpoint);
                 }
