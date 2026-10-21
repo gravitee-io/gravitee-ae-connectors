@@ -228,9 +228,6 @@ public class WebSocketConnector extends AbstractConnector<WebSocketConnector> {
                         engine.getEndpointRetryCount(endpoint)
                     );
                     webSocketPromise.fail(throwable);
-
-                    // Force the WebSocket client to close after a defect
-                    webSocketClient.close();
                 });
         }
     }
