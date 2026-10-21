@@ -28,6 +28,8 @@ import io.vertx.core.http.WebSocketClient;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,9 @@ public abstract class AbstractConnector<T> extends AbstractLifecycleComponent<T>
     private final Logger logger = NodeLoggerFactory.getLogger(AbstractConnector.class);
     protected HttpClient httpClient;
     protected WebSocketClient webSocketClient;
+
+    // Vert.x keeps a reference to every client it creates, even once closed: create one client per endpoint and reuse it
+    private final Map<String, WebSocketClient> webSocketClients = new ConcurrentHashMap<>();
 
     @Autowired
     protected Vertx vertx;
@@ -64,13 +69,16 @@ public abstract class AbstractConnector<T> extends AbstractLifecycleComponent<T>
                 logger.warn(ise.getMessage());
             }
         }
-        if (webSocketClient != null) {
-            try {
-                webSocketClient.close();
-            } catch (IllegalStateException ise) {
-                logger.warn(ise.getMessage());
-            }
-        }
+        webSocketClients
+            .values()
+            .forEach(client -> {
+                try {
+                    client.close();
+                } catch (IllegalStateException ise) {
+                    logger.warn(ise.getMessage());
+                }
+            });
+        webSocketClients.clear();
     }
 
     public abstract Future<Void> writeTextMessage(String text);
@@ -84,7 +92,9 @@ public abstract class AbstractConnector<T> extends AbstractLifecycleComponent<T>
     protected void initWebSocketClient(Engine engine) {
         Assert.notNull(engine, "Engine can not be null");
         Endpoint endpoint = engine.nextEndpoint();
-        webSocketClient = vertx.createWebSocketClient(engine.getWebSocketClientOptions(endpoint));
+        webSocketClient = webSocketClients.computeIfAbsent(endpoint.getUrl(), url ->
+            vertx.createWebSocketClient(engine.getWebSocketClientOptions(endpoint))
+        );
     }
 
     protected MultiMap getDefaultHeaders(Engine engine) {
