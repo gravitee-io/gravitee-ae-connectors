@@ -1,3 +1,10 @@
+## [3.0.1](https://github.com/gravitee-io/gravitee-ae-connectors/compare/3.0.0...3.0.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* **connector:** reuse one WebSocketClient per endpoint across reconnections ([de48432](https://github.com/gravitee-io/gravitee-ae-connectors/commit/de4843226a11e116df1133079147cb5ae998f66c))
+
 # [3.0.0](https://github.com/gravitee-io/gravitee-ae-connectors/compare/2.3.1...3.0.0) (2026-06-17)
 
 
